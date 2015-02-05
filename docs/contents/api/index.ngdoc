@@ -1,0 +1,9 @@
+@ngdoc overview
+@name API Reference
+@description
+
+# ng.cx.media-controls API Reference
+
+Welcome to the **ng.cx.media-controls** API reference.
+
+If you want to know how **ng.cx.media-controls** works, checkout the {@link guide/ guide} and the {@link demos/ demos}

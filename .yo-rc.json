@@ -1,0 +1,28 @@
+{
+  "generator-nglib": {
+    "github.username": "ef-ctx",
+    "license.name": "MIT",
+    "license.url": "https://raw.githubusercontent.com/EFEducationFirstMobile/oss/master/LICENSE",
+    "author.name": "EF CTX",
+    "author.email": "ctx@ef.com",
+    "author.url": "http://ef.com",
+    "has.sass": false,
+    "use.travis": true,
+    "project.name": "ng.cx.media-controls",
+    "project.description": "AngularJS directives to control media elements.",
+    "bower.id": "ng.cx.media-controls",
+    "npm.id": "ng.cx.media-controls",
+    "angular.module": "ng.cx.media-controls",
+    "has.tpl": true,
+    "has.css": false,
+    "has.less": true,
+    "has.docs": true,
+    "use.git": true,
+    "github.reponame": "ng.cx.media-controls",
+    "homepage.url": "https://github.com/ef-ctx/ng.cx.media-controls",
+    "docs.url": "https://github.com/ef-ctx/ng.cx.media-controls",
+    "bugs.url": "https://github.com/ef-ctx/ng.cx.media-controls/issues",
+    "travis.id": "ef-ctx/ng.cx.media-controls",
+    "repo.url": "git@github.com:ef-ctx/ng.cx.media-controls.git"
+  }
+}

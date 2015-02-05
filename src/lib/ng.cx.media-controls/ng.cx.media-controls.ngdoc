@@ -1,0 +1,6 @@
+@ngdoc overview
+@name ng.cx.media-controls
+@description
+
+AngularJS directives to control media elements.
+

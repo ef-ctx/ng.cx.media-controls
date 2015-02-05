@@ -1,0 +1,6 @@
+<div class="cx-audio-mini button button-playback-control" ng-click="playOrStop()">
+    <i ng-show="!mediaLoaded" class="ef-icon ef-icon-spin ef-icon-loading"></i>
+    <i ng-show="mediaLoaded && !isPlaying" class="ef-icon ef-icon-audio"></i>
+    <i ng-show="mediaLoaded && isPlaying" class="ef-icon ef-icon-stop"></i>
+    <div ng-show="isPlaying" class="pulse"></div>
+</div>

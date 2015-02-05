@@ -1,0 +1,19 @@
+<div class="cx-media-controls">
+    <div class="button button-playback-control" ng-click="togglePlayback()">
+        <i ng-show="!(mediaLoaded || metadataLoaded)" class="ef-icon ef-icon-spin ef-icon-loading"></i>
+        <i ng-show="(mediaLoaded || metadataLoaded) && !mediaIsVideo && !isPlaying" class="ef-icon ef-icon-audio"></i>
+        <i ng-show="(mediaLoaded || metadataLoaded) && mediaIsVideo && !isPlaying" class="ef-icon ef-icon-play"></i>
+        <i ng-show="(mediaLoaded || metadataLoaded) && isPlaying" class="ef-icon ef-icon-pause"></i>
+        <div ng-show="isPlaying" class="pulse"></div>
+        <div ng-show="isPlaying" class="pulse pulse2"></div>
+    </div>
+    <span ng-show="(mediaLoaded || metadataLoaded)" class="media-duration">
+        {{mediaDuration | duration}}
+    </span>
+    <div class="scrub-control">
+        <input type="range" min="0" max="{{mediaDuration}}" step="0.1" ng-model="playbackProgress" ng-mousedown="pauseProgressTracking()" ng-change="updateProgressBar(true)" ng-mouseup="seek(playbackProgress)" />
+        <div class="playback-progress-bar-backdrop">
+            <div class="playback-progress-bar" style="width: {{playbackProgressPercentage}}%"></div>
+        </div>
+    </div>
+</div>
