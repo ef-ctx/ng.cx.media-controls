@@ -1,8 +1,8 @@
 # ng.cx.media-controls
-[![Build Status: Linux](http://img.shields.io/travis/ef-ctx/ng.cx.media-controls/master.svg?style=flat-square)](https://travis-ci.org/ef-ctx/ng.cx.media-controls)
-[![Bower version](http://img.shields.io/bower/v/ng.cx.media-controls.svg?style=flat-square)](git@github.com:ef-ctx/ng.cx.media-controls.git)
 
 > AngularJS directives to control media elements.
+
+## WIP: refactoring out prototype code.
 
 ## Getting Started
 
@@ -23,8 +23,6 @@ $ npm install --save ng.cx.media-controls
 Include the following JS/CSS/assets in your build.
 - dist/ng.cx.media-controls.js OR dist/ng.cx.media-controls.min.js
 - dist/ng.cx.media-controls.css
-
-Checkout the [full documentation](https://github.com/ef-ctx/ng.cx.media-controls).
 
 
 ## Contributing
@@ -52,7 +50,7 @@ that you can browse the documentation, the examples and the code coverage.
 
 ## [MIT License](LICENSE)
 
-[Copyright (c) 2005 EF CTX](https://raw.githubusercontent.com/EFEducationFirstMobile/oss/master/LICENSE)
+[Copyright (c) 2015 EF CTX](https://raw.githubusercontent.com/EFEducationFirstMobile/oss/master/LICENSE)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in

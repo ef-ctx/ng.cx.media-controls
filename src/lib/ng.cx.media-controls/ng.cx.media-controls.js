@@ -1,116 +1,310 @@
 (function (angular) {
     'use strict';
 
-    var module = angular.module('ng.cx.media-controls', ['ng.cx.media-controls.templates']);
+    var module = angular.module('ng.cx.media-controls', [
+        'ng.cx.media-controls.templates',
+        'ng.cx.ua',
+        'ng.cx.generate'
+    ]);
+
+    function getTypeFromFiles(files) {
+        var extension;
+        if (files.length && files[0].type) {
+            return files[0].type.match(/^video/) ? 'video' : 'audio';
+        }
+        return 'audio';
+    }
+
+    function getTypeFromElement(element) {
+        return 'audio';
+    }
+
+    function createMediaElement($window, $element, type, files) {
+        var mediaElement = $window.document.createElement(type);
+        var ix;
+        mediaElement.setAttribute('preload', '');
+        mediaElement.setAttribute('buffered', '');
+        if (typeof files === 'string') {
+            mediaElement.src = files;
+        } else {
+            for (ix = 0; ix < files.length; ix++) {
+                if (mediaElement.canPlayType(files[ix].type)) {
+                    mediaElement.src = files[ix].url;
+                    break;
+                }
+            }
+        }
+        if (type === 'video') {
+            $element.append(mediaElement);
+        }
+        return angular.element(mediaElement);
+    }
 
     /**
-     * @ngdoc directive
-     * @name ng.cx.media-controls.directive:cxAudioMini
+     * nodoc internal service
+     * @name ng.cx.media-controls.cxMediaControlLink
      *
      * @description
-     * Minimal, one button, audio player.
+     * Media control bar for audio/video.
      */
-    module.directive('cxAudioMini', [
-        '$rootScope',
-        'generateGuid',
-        function cxAudioMini($rootScope, generateGuid) {
+    function link($rootScope, $window, $timeout, cxGenerate, cxUA) {
 
-            return {
-                scope: {
-                    asset: '=cxAudioMini'
-                },
-                restrict: 'A',
-                templateUrl: 'components/media/audio-mini.tpl.html',
-                replace: 'element',
-                link: function ($scope) {
-                    var mediaElement = angular.element(document.createElement('audio'));
-                    var mediaGuid = generateGuid();
-                    var media = mediaElement[0];
+        return function ($scope, $element) {
 
-                    function getSourceTags() {
-                        var sourceTags = '';
-                        var files = $scope.asset.files;
+            var $mediaElement;
+            var mediaElement;
+            var type; // audio/video
+            var mediaGuid = cxGenerate.sequence('media');
+            var trackProgress = true;
+            var autoFadeOutEnabled = false;
+            var mouseOver = false;
+            var isIOS = cxUA.isIOS;
+            var hidePromise = null;
 
-                        for (var i = files.length - 1; i >= 0; i--) {
-                            sourceTags = sourceTags + '<source src="' + files[i].url + '" type="' + files[i].mime_type.toLowerCase() + '">';
-                        }
+            function cancelHide() {
+                if (hidePromise !== null) {
+                    $timeout.cancel(hidePromise);
+                    hidePromise = null;
+                }
+            }
 
-                        return sourceTags;
-                    }
+            function show() {
+                cancelHide();
+                $element.addClass('visible');
+                $element.removeClass('hidden');
+                $element.removeClass('hide-fast');
+            }
 
-                    mediaElement.attr('preload', '');
-                    mediaElement.attr('buffered', '');
-                    $scope.isPlaying = false;
-                    $scope.mediaLoaded = false;
+            function hide(skipAnimation) {
+                $element.removeClass('visible');
+                $element.addClass('hidden');
+                if (skipAnimation) {
+                    $element.addClass('hide-fast');
+                }
+            }
 
-                    mediaElement.on('playing', function () {
-                        $scope.$evalAsync(function () {
-                            $scope.isPlaying = true;
-                            $rootScope.$broadcast('cxMedia.playStarted', mediaGuid);
-                        });
-                    });
+            function scheduleHide() {
+                if (autoFadeOutEnabled && !mouseOver) {
+                    cancelHide();
+                    hidePromise = $timeout(hide, 3000);
+                }
+            }
 
-                    mediaElement.on('pause', function () {
-                        media.currentTime = 0;
-                        $scope.$evalAsync(function () {
-                            $scope.isPlaying = false;
-                        });
-                    });
-
-                    mediaElement.on('error', function () {
-                        media.currentTime = 0;
-                        $scope.$evalAsync(function () {
-                            $scope.isPlaying = false;
-                        });
-                    });
-
-                    mediaElement.on('loadeddata', function (evt) {
-                        $scope.$evalAsync(function () {
-                            $scope.mediaLoaded = true;
-                        });
-                    });
-
-                    mediaElement.on('ended', function (evt) {
-                        media.currentTime = 0;
-                        $scope.$evalAsync(function () {
-                            $scope.isPlaying = false;
-                        });
-                    });
-
-                    mediaElement.html(getSourceTags());
-                    media.load();
-
-                    $scope.$on('cxMedia.playStarted', function (evt, data) {
-                        if (data !== mediaGuid && $scope.isPlaying) {
-                            media.pause();
-                        }
-                    });
-
-                    $scope.$on('state.pauseMedia', function () {
-                        if ($scope.isPlaying) {
-                            media.pause();
-                        }
-                    });
-
-                    $scope.$on('state.mute', function () {
-                        media.muted = true;
-                    });
-
-                    $scope.$on('state.unmute', function () {
-                        media.muted = false;
-                    });
-
-                    $scope.playOrStop = function () {
-                        if (!$scope.isPlaying) {
-                            media.play();
-                        } else {
-                            media.pause();
-                        }
-                    };
+            var seek = function (time) {
+                trackProgress = true;
+                mediaElement.currentTime = time;
+                if ($scope.isPlaying) {
+                    scheduleHide();
                 }
             };
-        }
-    ]);
+
+            var togglePlayback = function () {
+                if (!$scope.isPlaying) {
+                    mediaElement.play();
+                } else {
+                    mediaElement.pause();
+                }
+            };
+
+            var pauseProgressTracking = function () {
+                cancelHide();
+                trackProgress = false;
+            };
+
+            var updateProgressBar = function () {
+                var percentage = parseInt(($scope.playbackProgress / $scope.mediaDuration) * 100);
+                $scope.playbackProgressPercentage = isNaN(percentage) ? 0 : Math.min(100, percentage);
+            };
+
+            // -- user events
+
+            var onMouseEnter = function () {
+                mouseOver = true;
+                show();
+            };
+
+            var onMouseLeave = function () {
+                mouseOver = false;
+                scheduleHide();
+            };
+
+            // -- media events
+
+            var onMediaPlaying = function () {
+                $scope.$evalAsync(function () {
+                    $scope.isPlaying = true;
+                    $rootScope.$broadcast('cxMedia.playStarted', mediaGuid);
+                    scheduleHide();
+                });
+            };
+
+            var onMediaPause = function () {
+                $scope.$evalAsync(function () {
+                    $scope.isPlaying = false;
+                    show();
+                });
+            };
+
+            var onMediaError = function () {
+                seek(0);
+                $scope.$evalAsync(function () {
+                    $scope.isPlaying = false;
+                    $scope.playbackProgress = 0;
+                    $scope.updateProgressBar();
+                    show();
+                });
+            };
+
+            var onMediaTimeupdate = function () {
+                if (trackProgress) {
+                    $scope.$evalAsync(function () {
+                        $scope.playbackProgress = mediaElement.currentTime;
+                        $scope.updateProgressBar();
+                    });
+                }
+            };
+
+            var onMediaLoadeddata = function () {
+                $scope.$evalAsync(function () {
+                    $scope.mediaLoaded = true;
+                    $scope.mediaDuration = Math.floor(mediaElement.duration);
+                });
+            };
+
+            var onMediaLoadedmetadata = function () {
+                $scope.$evalAsync(function () {
+                    $scope.metadataLoaded = true;
+                    $scope.mediaDuration = Math.floor(mediaElement.duration);
+                });
+            };
+
+            var onMediaEnded = function () {
+                seek(0);
+                $scope.$evalAsync(function () {
+                    $scope.isPlaying = false;
+                    $scope.playbackProgress = 0;
+                    $scope.updateProgressBar();
+                    show();
+                });
+            };
+
+            function bindMediaEvents($mediaElement) {
+                $mediaElement.on('playing', onMediaPlaying);
+                $mediaElement.on('pause', onMediaPause);
+                $mediaElement.on('error', onMediaError);
+                $mediaElement.on('timeupdate', onMediaTimeupdate);
+                $mediaElement.on('loadeddata', onMediaLoadeddata);
+                $mediaElement.on('loadedmetadata', onMediaLoadedmetadata);
+                $mediaElement.on('ended', onMediaEnded);
+            }
+
+            // -- scope state
+
+            $scope.isPlaying = false;
+            $scope.mediaLoaded = false;
+            $scope.mediaIsVideo = null;
+            $scope.metadataLoaded = false;
+            $scope.playbackProgress = 0;
+            $scope.playbackProgressPercentage = 0;
+            $scope.mediaDuration = 0;
+
+            // -- scope watches
+
+            $scope.$watch('files', function (files) {
+                if (files) {
+
+                    type = getTypeFromFiles(files);
+                    $scope.mediaIsVideo = type === 'video';
+                    $mediaElement = createMediaElement($window, $element, type, files);
+                    mediaElement = $mediaElement[0];
+                    bindMediaEvents($mediaElement);
+                    mediaElement.load();
+                }
+            });
+
+            $scope.$watch('element', function (element) {
+                if (element && !$scope.files) {
+                    type = getTypeFromElement(element);
+                    $scope.mediaIsVideo = type === 'video';
+                    $mediaElement = angular.element(element);
+                    mediaElement = $mediaElement[0];
+                    bindMediaEvents($mediaElement);
+                }
+            });
+
+            // -- ?? why
+
+            if (isIOS) {
+                var $progressBar = $element.find('input');
+                $progressBar.on('touchstart', function () {
+                    $scope.pauseProgressTracking();
+                });
+                $progressBar.on('touchend', function () {
+                    seek($scope.playbackProgress);
+                });
+            }
+
+            // -- scope handlers
+
+            $scope.pauseProgressTracking = pauseProgressTracking;
+            $scope.updateProgressBar = updateProgressBar;
+            $scope.seek = seek;
+            $scope.togglePlayback = togglePlayback;
+
+            // -- messaging
+
+            $scope.$on('cxMedia.playStarted', function (evt, guid) {
+                if (guid !== mediaGuid && $scope.isPlaying) {
+                    mediaElement.pause();
+                }
+            });
+
+            $scope.$on('state.pauseMedia', function () {
+                if ($scope.isPlaying) {
+                    mediaElement.pause();
+                }
+            });
+
+            $scope.$on('state.mute', function () {
+                mediaElement.muted = true;
+            });
+
+            $scope.$on('state.unmute', function () {
+                mediaElement.muted = false;
+            });
+
+            if ($scope.mediaIsVideo) {
+                $scope.$on('cxMediaControls.enableAutoFadeOut', function () {
+                    autoFadeOutEnabled = true;
+
+                    if ($scope.isPlaying) {
+                        scheduleHide();
+                    }
+
+                    $element.bind('mouseenter', onMouseEnter);
+                    $element.bind('mouseleave', onMouseLeave);
+                });
+
+                $scope.$on('cxMediaControls.disableAutoFadeOut', function () {
+                    autoFadeOutEnabled = false;
+
+                    $element.unbind('mouseenter', onMouseEnter);
+                    $element.unbind('mouseleave', onMouseLeave);
+
+                    show();
+                });
+
+                $scope.$on('cxMediaControls.show', function () {
+                    show();
+                    scheduleHide();
+                });
+
+                $scope.$on('cxMediaControls.hide', function (evt, skipAnimation) {
+                    hide(skipAnimation);
+                });
+            }
+        };
+    }
 
     /**
      * @ngdoc directive
@@ -121,263 +315,59 @@
      */
     module.directive('cxMediaControls', [
         '$rootScope',
+        '$window',
         '$timeout',
-        'generateGuid',
-        'browser',
-        function cxMediaControls($rootScope, $timeout, generateGuid, browser) {
+        'cxGenerate',
+        'cxUA',
+        function cxMediaControls($rootScope, $window, $timeout, cxGenerate, cxUA) {
 
             return {
                 scope: {
-                    asset: '=cxMediaControls'
+                    files: '=cxMediaControls',
+                    type: '=',
+                    element: '='
                 },
                 restrict: 'A',
-                templateUrl: 'components/media/media-controls.tpl.html',
-                replace: 'element',
-                link: function ($scope, $element) {
-                    var mediaElement;
-                    var media;
-                    var mediaGuid = generateGuid();
-                    var trackProgress = true;
-                    var autoFadeOutEnabled = false;
-                    var mouseOver = false;
-                    var isIOS = browser.isIOS();
-                    var hidePromise = null;
-
-                    var handleMouseEnter = function () {
-                        mouseOver = true;
-                        show();
-                    };
-
-                    var handleMouseLeave = function () {
-                        mouseOver = false;
-                        scheduleHide();
-                    };
-
-                    function scheduleHide() {
-                        if (autoFadeOutEnabled && !mouseOver) {
-                            cancelHide();
-                            hidePromise = $timeout(hide, 3000);
-                        }
-                    }
-
-                    function cancelHide() {
-                        if (hidePromise !== null) {
-                            $timeout.cancel(hidePromise);
-                            hidePromise = null;
-                        }
-                    }
-
-                    function show() {
-                        cancelHide();
-                        $element.addClass('visible');
-                        $element.removeClass('hidden');
-                        $element.removeClass('hide-fast');
-                    }
-
-                    function hide(skipAnimation) {
-                        $element.removeClass('visible');
-                        $element.addClass('hidden');
-                        if (skipAnimation) {
-                            $element.addClass('hide-fast');
-                        }
-                    }
-
-                    function getSourceTags() {
-                        var sourceTags = '';
-                        var files = $scope.asset.files;
-
-                        for (var i = files.length - 1; i >= 0; i--) {
-                            sourceTags = sourceTags + '<source src="' + files[i].url + '" type="' + files[i].mime_type.toLowerCase() + '">';
-                        }
-
-                        return sourceTags;
-                    }
-
-                    function bind(mediaElement) {
-                        mediaElement.on('playing', function () {
-                            $scope.$evalAsync(function () {
-                                $scope.isPlaying = true;
-                                $rootScope.$broadcast('cxMedia.playStarted', mediaGuid);
-                                scheduleHide();
-                            });
-                        });
-
-                        mediaElement.on('pause', function () {
-                            $scope.$evalAsync(function () {
-                                $scope.isPlaying = false;
-                                show();
-                            });
-                        });
-
-                        mediaElement.on('error', function () {
-                            $scope.seek(0);
-                            $scope.$evalAsync(function () {
-                                $scope.isPlaying = false;
-                                $scope.playbackProgress = 0;
-                                $scope.updateProgressBar();
-                                show();
-                            });
-                        });
-
-                        mediaElement.on('timeupdate', function () {
-                            if (trackProgress) {
-                                $scope.$evalAsync(function () {
-                                    $scope.playbackProgress = media.currentTime;
-                                    $scope.updateProgressBar();
-                                });
-                            }
-                        });
-
-                        mediaElement.on('loadeddata', function () {
-                            $scope.$evalAsync(function () {
-                                $scope.mediaLoaded = true;
-                                $scope.mediaDuration = Math.floor(media.duration);
-                            });
-                        });
-
-                        mediaElement.on('loadedmetadata', function () {
-                            $scope.$evalAsync(function () {
-                                $scope.metadataLoaded = true;
-                                $scope.mediaDuration = Math.floor(media.duration);
-                            });
-                        });
-
-                        mediaElement.on('ended', function () {
-                            $scope.seek(0);
-                            $scope.$evalAsync(function () {
-                                $scope.isPlaying = false;
-                                $scope.playbackProgress = 0;
-                                $scope.updateProgressBar();
-                                show();
-                            });
-                        });
-                    }
-
-                    $scope.isPlaying = false;
-                    $scope.mediaLoaded = false;
-                    $scope.metadataLoaded = false;
-                    $scope.playbackProgress = 0;
-                    $scope.playbackProgressPercentage = 0;
-                    $scope.mediaDuration = 0;
-
-                    // for audio assets, the asset is passed through the scope and an audio element is created
-                    if (angular.isObject($scope.asset)) {
-                        $scope.mediaIsVideo = false;
-                        mediaElement = angular.element(document.createElement('audio'));
-                        media = mediaElement[0];
-                        mediaElement.attr('preload', '');
-                        mediaElement.attr('buffered', '');
-
-                        bind(mediaElement);
-
-                        mediaElement.html(getSourceTags());
-                        media.load();
-                    }
-                    // for video assets, the video element passed by the parent scope with an emit 'cxMedia.bind'
-                    else {
-                        // @todo: add buffering bar - media.buffered.end(0);
-                        $scope.mediaIsVideo = true;
-                        $scope.$on('cxMedia.bind', function (evt, videoElement) {
-                            mediaElement = videoElement;
-                            media = mediaElement[0];
-
-                            bind(mediaElement);
-                        });
-                    }
-
-                    $scope.pauseProgressTracking = function () {
-                        cancelHide();
-                        trackProgress = false;
-                    };
-
-                    if (isIOS) {
-                        var $progressBar = $element.find('input');
-                        $progressBar.on('touchstart', function () {
-                            $scope.pauseProgressTracking();
-                        });
-                        $progressBar.on('touchend', function () {
-                            $scope.seek($scope.playbackProgress);
-                        });
-                    }
-
-                    $scope.updateProgressBar = function () {
-                        var percentage = parseInt((($scope.playbackProgress / $scope.mediaDuration) * 100));
-                        $scope.playbackProgressPercentage = isNaN(percentage) ? 0 : Math.min(100, percentage);
-                    };
-
-                    $scope.seek = function (time) {
-                        trackProgress = true;
-
-                        media.currentTime = time;
-
-                        if ($scope.isPlaying) {
-                            scheduleHide();
-                        }
-                    };
-
-                    $scope.$on('cxMedia.playStarted', function (evt, guid) {
-                        if (guid !== mediaGuid && $scope.isPlaying) {
-                            media.pause();
-                        }
-                    });
-
-                    $scope.$on('state.pauseMedia', function () {
-                        if ($scope.isPlaying) {
-                            media.pause();
-                        }
-                    });
-
-                    $scope.$on('state.mute', function () {
-                        media.muted = true;
-                    });
-
-                    $scope.$on('state.unmute', function () {
-                        media.muted = false;
-                    });
-
-                    // Account for zoom behaviours if this media control is being used for video
-                    if ($scope.mediaIsVideo) {
-                        $scope.$on('cxMediaControls.enableAutoFadeOut', function () {
-                            autoFadeOutEnabled = true;
-
-                            if ($scope.isPlaying) {
-                                scheduleHide();
-                            }
-
-                            $element.bind('mouseenter', handleMouseEnter);
-                            $element.bind('mouseleave', handleMouseLeave);
-                        });
-
-                        $scope.$on('cxMediaControls.disableAutoFadeOut', function () {
-                            autoFadeOutEnabled = false;
-
-                            $element.unbind('mouseenter', handleMouseEnter);
-                            $element.unbind('mouseleave', handleMouseLeave);
-
-                            show();
-                        });
-
-                        $scope.$on('cxMediaControls.show', function () {
-                            show();
-                            scheduleHide();
-                        });
-
-                        $scope.$on('cxMediaControls.hide', function (evt, skipAnimation) {
-                            hide(skipAnimation);
-                        });
-                    }
-
-                    $scope.togglePlayback = function () {
-                        if (!$scope.isPlaying) {
-                            media.play();
-                        } else {
-                            media.pause();
-                        }
-                    };
-                }
+                templateUrl: 'lib/ng.cx.media-controls/media-controls.tpl.html',
+                link: link($rootScope, $window, $timeout, cxGenerate, cxUA)
             };
         }
     ]);
+
+    /**
+     * @ngdoc filter
+     * @name ng.cx.media-controls.filter:cxMediaDuration
+     *
+     * @description
+     * Human readable duration.
+     * - minimum unit is minutes
+     * - maximum unit is hours
+     * - defaults to '0:00' in case of bad input
+     */
+    module.filter('cxMediaDuration', function () {
+
+        return function (value) {
+            var output = '0:00';
+            var hours = 0;
+            var minutes = 0;
+            var seconds = Math.round(parseFloat(value, 10));
+
+            if (angular.isNumber(seconds) && seconds >= 0 && isFinite(seconds)) {
+                hours = Math.floor(seconds / 3600);
+                seconds = seconds % 3600;
+                minutes = Math.floor(seconds / 60);
+                seconds = seconds % 60;
+
+                output = (hours > 0 ? hours + ':' : '') +
+                    (hours > 0 && minutes < 10 ? '0' + minutes : minutes) +
+                    ':' +
+                    (seconds < 10 ? '0' + seconds : seconds);
+            }
+
+            return output;
+        };
+
+    });
 
 })(angular);
 

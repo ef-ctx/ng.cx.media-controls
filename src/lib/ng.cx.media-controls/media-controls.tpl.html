@@ -8,7 +8,7 @@
         <div ng-show="isPlaying" class="pulse pulse2"></div>
     </div>
     <span ng-show="(mediaLoaded || metadataLoaded)" class="media-duration">
-        {{mediaDuration | duration}}
+        {{mediaDuration | cxMediaDuration}}
     </span>
     <div class="scrub-control">
         <input type="range" min="0" max="{{mediaDuration}}" step="0.1" ng-model="playbackProgress" ng-mousedown="pauseProgressTracking()" ng-change="updateProgressBar(true)" ng-mouseup="seek(playbackProgress)" />

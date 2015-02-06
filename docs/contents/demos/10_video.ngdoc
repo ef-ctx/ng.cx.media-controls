@@ -1,0 +1,93 @@
+@ngdoc overview
+@name video
+@description
+
+## video
+
+Providing a single file, allowing the
+
+<doc:example module="exampleApp" height="500">
+    <doc:source>
+        <script>
+            angular.module('exampleApp', ['ng.cx.media-controls'])
+            .controller('exampleCtrl', ['$scope', function ($scope) {
+                $scope.url = 'http://hpr.dogphilosophy.net/test/opus.opus';
+            }]);
+        </script>
+        <style>
+            form {
+                padding: 10px;
+            }
+        </style>
+        <div data-ng-controller="exampleCtrl">
+            <form name="exampleForm">
+                <div cx-media-controls="url"></div>
+            </form>
+        </div>
+    </doc:source>
+</doc:example>
+
+
+Providing a list of files with different (mime)types will select the first compatible one, if any.
+
+<doc:example module="exampleApp" height="500">
+    <doc:source>
+        <script>
+            angular.module('exampleApp', ['ng.cx.media-controls'])
+            .controller('exampleCtrl', ['$scope', function ($scope) {
+                $scope.files = [{
+                    url: 'http://hpr.dogphilosophy.net/test/opus.opus',
+                    type: 'audio/ogg; codecs="opus"'
+                }, {
+                    url: 'http://hpr.dogphilosophy.net/test/weba.weba',
+                    type: 'audio/webm'
+                }, {
+                    url: 'http://hpr.dogphilosophy.net/test/ogg.ogg',
+                    type: 'audio/ogg'
+                }, {
+                    url: 'http://hpr.dogphilosophy.net/test/mp3.mp3',
+                    type: 'audio/mpeg'
+                }];
+            }]);
+        </script>
+        <style>
+            form {
+                padding: 10px;
+            }
+        </style>
+        <div data-ng-controller="exampleCtrl">
+            <form name="exampleForm">
+                <div cx-media-controls="files"></div>
+            </form>
+        </div>
+    </doc:source>
+</doc:example>
+
+
+Providing a video element will attach the controls to the provided element.
+
+<doc:example module="exampleApp" height="500">
+    <doc:source>
+        <script>
+            angular.module('exampleApp', ['ng.cx.media-controls'])
+            .controller('exampleCtrl', ['$scope', '$window', function ($scope, $window) {
+                $scope.file = 'http://hpr.dogphilosophy.net/test/opus.opus';
+                // note: for simplicity sake, never do this in a controller ;-)
+                $scope.vieoElement = $window.document.querySelector('video');
+            }]);
+        </script>
+        <style>
+            form {
+                padding: 10px;
+            }
+        </style>
+        <div data-ng-controller="exampleCtrl">
+            <form name="exampleForm">
+                <video>
+                    <source url="{{file}}" />
+                </video>
+                <div cx-media-controls element="element"></div>
+            </form>
+        </div>
+    </doc:source>
+</doc:example>

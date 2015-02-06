@@ -87,6 +87,8 @@ module.exports = function (grunt, data) {
             // watch: build_test, build_vendors
             vendor_js: [
                 '<%= paths.vendor %>/angular/angular.js',
+                '<%= paths.vendor %>/ng.cx.generate/dist/ng.cx.generate.js',
+                '<%= paths.vendor %>/ng.cx.ua/dist/ng.cx.ua.js',
             ],
 
             // test only dependencies
@@ -167,8 +169,9 @@ module.exports = function (grunt, data) {
                 // scripts stylesheets and examples
                 examplesScripts: [
                     'vendor/angular/angular.js',
+                    'vendor/ng.cx.generate/dist/ng.cx.generate.js',
+                    'vendor/ng.cx.ua/dist/ng.cx.ua.js',
                     'src/lib/<%= vars.ngNamespace %>/<%= vars.ngNamespace %>.js',
-
                     'src/lib/<%= vars.ngNamespace %>/<%= vars.ngNamespace %>.templates.js',
 
                 ],
