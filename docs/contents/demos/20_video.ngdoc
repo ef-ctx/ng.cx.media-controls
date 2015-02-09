@@ -1,0 +1,43 @@
+@ngdoc overview
+@name Video (via dom element)
+@description
+
+## Video, attaching to element
+
+Providing a `<video>` element will attach the controls to the provided element.
+
+<doc:example module="exampleApp" height="400">
+    <doc:source>
+        <script>
+            angular.module('exampleApp', ['ng.cx.media-controls'])
+            .controller('exampleCtrl', ['$scope', '$window', function ($scope, $window) {
+                $scope.file = 'http://techslides.com/demos/sample-videos/small.webm';
+                // note: for simplicity sake, never do this in a controller ;-)
+                $scope.videoElement = $window.document.querySelector('video');
+            }]);
+        </script>
+        <style>
+            .container {
+                padding: 10px;
+            }
+            .video-wrapper {
+                position: relative;
+            }
+            video {
+                width: 100%;
+            }
+            .cx-media-controls {
+                position: absolute;
+                bottom: 20px;
+                left: 50%;
+                margin-left: -150px;
+            }
+        </style>
+        <div data-ng-controller="exampleCtrl" class="container">
+            <video>
+                <source url="{{file}}" />
+            </video>
+            <div cx-media-controls element="videoElement"></div>
+        </div>
+    </doc:source>
+</doc:example>

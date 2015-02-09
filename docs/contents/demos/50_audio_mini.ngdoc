@@ -1,0 +1,28 @@
+@ngdoc overview
+@name Audio Mini
+@description
+
+## Audio Mini
+
+The audio mini.
+
+<doc:example module="exampleApp" height="120">
+    <doc:source>
+        <script>
+            angular.module('exampleApp', ['ng.cx.media-controls'])
+            .controller('exampleCtrl', ['$scope', '$window', function ($scope, $window) {
+                $scope.file = 'http://hpr.dogphilosophy.net/test/opus.opus';
+                // note: for simplicity sake, never do this in a controller ;-)
+                $scope.audioElement = $window.document.querySelector('audio');
+            }]);
+        </script>
+        <style>
+            .container {
+                padding: 10px;
+            }
+        </style>
+        <div data-ng-controller="exampleCtrl" class="container">
+            <div cx-audio-mini="file"></div>
+        </div>
+    </doc:source>
+</doc:example>

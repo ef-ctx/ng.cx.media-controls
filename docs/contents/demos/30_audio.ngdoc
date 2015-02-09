@@ -1,0 +1,60 @@
+@ngdoc overview
+@name Audio (via files)
+@description
+
+## Audio, single file
+
+Providing a single file will create a `<audio>` element.
+
+<doc:example module="exampleApp" height="120">
+    <doc:source>
+        <script>
+            angular.module('exampleApp', ['ng.cx.media-controls'])
+            .controller('exampleCtrl', ['$scope', function ($scope) {
+                $scope.url = 'http://hpr.dogphilosophy.net/test/opus.opus';
+            }]);
+        </script>
+        <style>
+            .container {
+                padding: 10px;
+            }
+        </style>
+        <div data-ng-controller="exampleCtrl" class="container">
+            <div cx-media-controls="url"></div>
+        </div>
+    </doc:source>
+</doc:example>
+
+## Video, file list
+
+Providing a list of files with different mime types will create an `<audio>` element and load the first compatible file,
+if any.
+
+<doc:example module="exampleApp" height="120">
+    <doc:source>
+        <script>
+            angular.module('exampleApp', ['ng.cx.media-controls'])
+            .controller('exampleCtrl', ['$scope', function ($scope) {
+                $scope.files = [{
+                    url: 'http://hpr.dogphilosophy.net/test/opus.opus',
+                    type: 'audio/ogg; codecs="opus"'
+                }, {
+                    url: 'http://hpr.dogphilosophy.net/test/mp3.mp3',
+                    type: 'audio/mpeg'
+                }, {
+                    url: 'http://hpr.dogphilosophy.net/test/ogg.ogg',
+                    type: 'audio/ogg'
+                }];
+            }]);
+        </script>
+        <style>
+            .container {
+                padding: 10px;
+            }
+        </style>
+        <div data-ng-controller="exampleCtrl" class="container">
+            <div cx-media-controls="files"></div>
+        </div>
+    </doc:source>
+</doc:example>
+

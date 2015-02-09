@@ -1,0 +1,31 @@
+@ngdoc overview
+@name Audio (via dom element)
+@description
+
+## Audio, attaching to element
+
+Providing an `<audio>` element will attach the controls to the provided element.
+
+<doc:example module="exampleApp" height="120">
+    <doc:source>
+        <script>
+            angular.module('exampleApp', ['ng.cx.media-controls'])
+            .controller('exampleCtrl', ['$scope', '$window', function ($scope, $window) {
+                $scope.file = 'http://hpr.dogphilosophy.net/test/opus.opus';
+                // note: for simplicity sake, never do this in a controller ;-)
+                $scope.audioElement = $window.document.querySelector('audio');
+            }]);
+        </script>
+        <style>
+            .container {
+                padding: 10px;
+            }
+        </style>
+        <div data-ng-controller="exampleCtrl" class="container">
+            <audio>
+                <source url="{{file}}" />
+            </audio>
+            <div cx-media-controls element="audioElement"></div>
+        </div>
+    </doc:source>
+</doc:example>

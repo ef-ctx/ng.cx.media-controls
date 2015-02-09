@@ -15,10 +15,6 @@
         return 'audio';
     }
 
-    function getTypeFromElement(element) {
-        return 'audio';
-    }
-
     function createMediaElement($window, $element, type, files) {
         var mediaElement = $window.document.createElement(type);
         var ix;
@@ -41,19 +37,21 @@
     }
 
     /**
-     * nodoc internal service
-     * @name ng.cx.media-controls.cxMediaControlLink
+     * shared link function for both directives
      *
-     * @description
-     * Media control bar for audio/video.
+     * @param {string=} type
+     * @param {Object} $rootScope
+     * @param {Object} $window
+     * @param {Object} $timeout
+     * @param {Object} cxGenerate
+     * @param {Object} cxUA
      */
-    function link($rootScope, $window, $timeout, cxGenerate, cxUA) {
+    function link(type, $rootScope, $window, $timeout, cxGenerate, cxUA) {
 
         return function ($scope, $element) {
 
             var $mediaElement;
             var mediaElement;
-            var type; // audio/video
             var mediaGuid = cxGenerate.sequence('media');
             var trackProgress = true;
             var autoFadeOutEnabled = false;
@@ -213,7 +211,7 @@
             $scope.$watch('files', function (files) {
                 if (files) {
 
-                    type = getTypeFromFiles(files);
+                    type = type || getTypeFromFiles(files);
                     $scope.mediaIsVideo = type === 'video';
                     $mediaElement = createMediaElement($window, $element, type, files);
                     mediaElement = $mediaElement[0];
@@ -224,7 +222,7 @@
 
             $scope.$watch('element', function (element) {
                 if (element && !$scope.files) {
-                    type = getTypeFromElement(element);
+                    type = type || element.tagName.toLowerCase();
                     $scope.mediaIsVideo = type === 'video';
                     $mediaElement = angular.element(element);
                     mediaElement = $mediaElement[0];
@@ -311,7 +309,21 @@
      * @name ng.cx.media-controls.directive:cxMediaControls
      *
      * @description
-     * Media control bar for audio/video.
+     * Media control bar for HTML5 audio/video.
+     *
+     * Creates `<audio>` or `<video>` element based on provided files **OR** attaches to the provided element.
+     *
+     * @scope
+     * @restrict A
+     *
+     * @param {string|array=} cxMediaControls A file url or an array of file objects in the form:
+     *
+     *     [{
+     *         url: <STRING>,
+     *         type: <STRING> // mime-type, ex: 'audio/ogg'
+     *     }]
+     *
+     * @param {Element=} element A reference to a DOM `<audio>` or `<video>` element, optionally wrapped as jQuery/jQlited element.
      */
     module.directive('cxMediaControls', [
         '$rootScope',
@@ -324,12 +336,52 @@
             return {
                 scope: {
                     files: '=cxMediaControls',
-                    type: '=',
                     element: '='
                 },
                 restrict: 'A',
                 templateUrl: 'lib/ng.cx.media-controls/media-controls.tpl.html',
-                link: link($rootScope, $window, $timeout, cxGenerate, cxUA)
+                link: link(null, $rootScope, $window, $timeout, cxGenerate, cxUA)
+            };
+        }
+    ]);
+
+    /**
+     * @ngdoc directive
+     * @name ng.cx.media-controls.directive:cxAudioMini
+     *
+     * @description
+     * Mini HTML5 audio player UI.
+     *
+     * Creates `<audio>` element based on provided files **OR** attaches to the provided element.
+     *
+     * @scope
+     * @restrict A
+     *
+     * @param {string|array=} cxMediaControls A file url or an array of file objects in the form:
+     *
+     *     [{
+     *         url: <STRING>,
+     *         type: <STRING> // mime-type, ex: 'audio/ogg'
+     *     }]
+     *
+     * @param {Element=} element A reference to a DOM `<audio>` element, optionally wrapped as jQuery/jQlited element.
+     */
+    module.directive('cxAudioMini', [
+        '$rootScope',
+        '$window',
+        '$timeout',
+        'cxGenerate',
+        'cxUA',
+        function cxAudioMini($rootScope, $window, $timeout, cxGenerate, cxUA) {
+
+            return {
+                scope: {
+                    files: '=cxAudioMini',
+                    element: '='
+                },
+                restrict: 'A',
+                templateUrl: 'lib/ng.cx.media-controls/audio-mini.tpl.html',
+                link: link('audio', $rootScope, $window, $timeout, cxGenerate, cxUA)
             };
         }
     ]);
