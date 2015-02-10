@@ -4,6 +4,11 @@
 
 # ng.cx.media-controls API Reference
 
-Welcome to the **ng.cx.media-controls** API reference.
+> Welcome to the **ng.cx.media-controls** API reference.
 
-If you want to know how **ng.cx.media-controls** works, checkout the {@link guide/ guide} and the {@link demos/ demos}
+If you want to know how **ng.cx.media-controls** works, checkout the {@link guide/ guide} and the {@link demos/ demos}.
+
+
+## Modules
+
+- **[ng.cl.media-controls](#/api/ng.cl.media-controls)** - Provides two directives to control audio and video elements.

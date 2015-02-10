@@ -2,5 +2,9 @@
 @name ng.cx.media-controls
 @description
 
-AngularJS directives to control media elements.
+> Provides two directives to control audio and media elements.
 
+# Dependencies
+
+- Service `cxUA` provided by module `ng.cx.ua` in [cx.ng.ua](https://github.com/ef-ctx/cx.ng.ua)
+- Service `cxGenerate` provided by module `ng.cx.generate` in [cx.ng.generate](https://github.com/ef-ctx/cx.ng.generate)
