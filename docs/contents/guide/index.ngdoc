@@ -19,12 +19,6 @@ Via bower:
 $ bower install --save ng.cx.media-controls
 ```
 
-Via npm:
-
-```
-$ npm install --save ng.cx.media-controls
-```
-
 Include the following JS/CSS/assets in your build:
 - dist/ng.cx.media-controls.js OR dist/ng.cx.media-controls.min.js
 - dist/ng.cx.media-controls.css

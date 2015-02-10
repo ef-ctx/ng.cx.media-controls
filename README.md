@@ -1,4 +1,6 @@
 # ng.cx.media-controls
+[![Build Status: Linux](http://img.shields.io/travis/ef-ctx/ng.cx.media-controls/master.svg?style=flat-square)](https://travis-ci.org/ef-ctx/ng.cx.media-controls)
+[![Bower version](http://img.shields.io/bower/v/ng.cx.media-controls.svg?style=flat-square)](https://github.com/ef-ctx/ng.cx.media-controls)
 
 > AngularJS directives to control media elements.
 
@@ -12,12 +14,6 @@ Via bower:
 
 ```
 $ bower install --save ng.cx.media-controls
-```
-
-Via npm:
-
-```
-$ npm install --save ng.cx.media-controls
 ```
 
 Include the following JS/CSS/assets in your build.
