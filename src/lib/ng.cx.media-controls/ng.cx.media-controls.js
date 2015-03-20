@@ -29,6 +29,7 @@
                     break;
                 }
             }
+
         }
         if (type === 'video') {
             $element.append(mediaElement);
@@ -68,6 +69,7 @@
 
             function show() {
                 cancelHide();
+
                 $element.addClass('visible');
                 $element.removeClass('hidden');
                 $element.removeClass('hide-fast');
