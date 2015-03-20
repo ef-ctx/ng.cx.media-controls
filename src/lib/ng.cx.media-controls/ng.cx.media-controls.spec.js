@@ -25,4 +25,3 @@ describe('ng.cx.media-controls', function () {
         });
     });
 });
-
